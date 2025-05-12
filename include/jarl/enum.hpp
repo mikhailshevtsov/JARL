@@ -229,7 +229,7 @@ public:
 
 public:
     constexpr basic_enum() noexcept = default;
-    explicit constexpr basic_enum(std::string_view name) noexcept { *this = enum_cast<E>(name); }
+    explicit constexpr basic_enum(std::string_view name) { *this = enum_cast<E>(name); }
 
     constexpr operator detail::enum_t<E>() const noexcept { return static_cast<enum_t<E>>(valueof(*this)); }
 
