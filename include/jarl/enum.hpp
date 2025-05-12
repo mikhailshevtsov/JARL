@@ -144,7 +144,7 @@ constexpr E make_enum(size_type index)
 }
 
 template <meta_enum E>
-constexpr std::optional<E> make_optional_enum(size_type index)
+constexpr std::optional<E> make_optional_enum(size_type index) noexcept
 {
     if (index < enum_size<E>())
         return enum_array<E>()[index];
@@ -165,7 +165,7 @@ constexpr E enum_cast(std::string_view name)
 
 // name -> optional enum
 template <meta_enum E>
-constexpr std::optional<E> enum_optional_cast(std::string_view name)
+constexpr std::optional<E> enum_optional_cast(std::string_view name) noexcept
 {
     constexpr const auto& names = enum_traits<E>::names();
     constexpr size_type size = enum_traits<E>::size();
@@ -189,7 +189,7 @@ constexpr E enum_cast(value_type_t<E> value)
 
 // value -> optional enum
 template <meta_enum E>
-constexpr std::optional<E> enum_optional_cast(value_type_t<E> value)
+constexpr std::optional<E> enum_optional_cast(value_type_t<E> value) noexcept
 {
     constexpr const auto& values = enum_traits<E>::values();
     constexpr size_type size = enum_traits<E>::size();
