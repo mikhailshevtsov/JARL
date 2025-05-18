@@ -153,7 +153,7 @@ constexpr std::optional<E> make_optional_enum(size_type index) noexcept
 
 // name -> enum
 template <meta_enum E>
-constexpr E enum_cast(std::string_view name)
+constexpr E enum_cast(name_type name)
 {
     constexpr const auto& names = enum_traits<E>::names();
     constexpr size_type size = enum_traits<E>::size();
@@ -165,7 +165,7 @@ constexpr E enum_cast(std::string_view name)
 
 // name -> optional enum
 template <meta_enum E>
-constexpr std::optional<E> enum_optional_cast(std::string_view name) noexcept
+constexpr std::optional<E> enum_optional_cast(name_type name) noexcept
 {
     constexpr const auto& names = enum_traits<E>::names();
     constexpr size_type size = enum_traits<E>::size();
@@ -203,7 +203,7 @@ constexpr std::optional<E> enum_optional_cast(value_type_t<E> value) noexcept
 template <typename T, meta_enum E>
 constexpr T enum_cast(E e) noexcept
 {
-    constexpr bool is_name = std::is_convertible_v<T, std::string_view>;
+    constexpr bool is_name = std::is_convertible_v<T, name_type>;
     constexpr bool is_value = std::is_same_v<T, value_type_t<E>>;
     constexpr bool is_enum = std::is_convertible_v<T, E>;
 
