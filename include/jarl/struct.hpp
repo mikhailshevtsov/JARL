@@ -91,10 +91,11 @@ private:
 
     using const_variant_t = std::variant<std::reference_wrapper<const decltype(get_type(adl<S>{}, JARL_INDEX(Is){}))>...>;
     using variant_t = std::variant<std::reference_wrapper<decltype(get_type(adl<S>{}, JARL_INDEX(Is){}))>...>;
+    using move_variant_t = std::variant<decltype(get_type(adl<S>{}, JARL_INDEX(Is){}))...>;
 
     static constexpr array_t<const_variant_t(*)(const S&)> _const_getters = { [](const S& s) -> const_variant_t { return std::get<Is>(make_tuple(s)); }... };
     static constexpr array_t<variant_t(*)(S&)> _getters = { [](S& s) -> variant_t { return std::get<Is>(make_tuple(s)); }... };
-    static constexpr array_t<variant_t(*)(S&&)> _move_getters = { [](S&& s) -> variant_t { return std::get<Is>(make_tuple(std::move(s))); }... };
+    static constexpr array_t<move_variant_t(*)(S&&)> _move_getters = { [](S&& s) -> move_variant_t { return std::get<Is>(make_tuple(std::move(s))); }... };
 };
 
 template <typename S, typename>
