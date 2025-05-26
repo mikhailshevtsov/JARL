@@ -46,7 +46,7 @@ public:
     using struct_type = S;
 
     template <size_type I>
-    using value_type = std::tuple_element<I, std::tuple<decltype(get_type(adl<S>{}, JARL_INDEX(Is){}))...>>;
+    using field_type = std::tuple_element<I, std::tuple<decltype(get_type(adl<S>{}, JARL_INDEX(Is){}))...>>;
 
     static constexpr name_type name() noexcept { return get_name(adl<S>{}); }
     static constexpr const auto& type_hints() noexcept { return _type_hints; }
@@ -116,7 +116,7 @@ template <meta_struct S>
 using struct_traits = detail::make_struct_traits_t<std::decay_t<S>, get_size(detail::adl<std::decay_t<S>>{})>;
 
 template <size_type I, meta_struct S>
-using value_type_t = typename struct_traits<S>::template value_type<I>;
+using field_type_t = typename struct_traits<S>::template field_type<I>;
 
 template <meta_struct S>
 constexpr name_type struct_name() noexcept { return struct_traits<S>::name(); }
