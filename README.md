@@ -1,6 +1,5 @@
 # ⭐ JARL (Just Another Reflection Library)
-**Header-only C++20 library for compile-time reflection**  
-**JARL** allows you to define C++ structs with compile-time metadata. It provides utilities to introspect and access struct fields at compile time without runtime overhead.
+**Header-only C++20 library for compile-time reflection**
 
 ## ✨ Features
 - **Header-only** - no dependencies beyond the standard library.
