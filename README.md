@@ -1,25 +1,24 @@
-# JARL (Just Another Reflection Library)
+# ⭐ JARL (Just Another Reflection Library)
 **Header-only C++20 library for compile-time reflection**  
-`JARL` allows you to define C++ structs with **compile-time metadata**. It provides utilities to introspect and access struct fields at compile time without runtime overhead.
+**JARL** allows you to define C++ structs with compile-time metadata. It provides utilities to introspect and access struct fields at compile time without runtime overhead.
 
-## Features
-
+## ✨ Features
 - **Header-only** - no dependencies beyond the standard library.
 - **Compile-time reflection** - retrieve field names, types, and member pointers at compile time.
 - **Structured access** - access struct fields by index or iterate over field metadata.
 - **Simple syntax** - define structs and fields with convenient macros.
 
-## Installation
+## ⚙️ Installation
 Simply include the header in your project:
 ```cpp
 #include "jarl/struct.hpp"
 ```
 No build steps or additional dependencies are required.
 
-## Usage
-Use JARL_STRUCT and JARL_FIELD to define structs with reflection metadata:
+## ✅ Usage
+Use **JARL_STRUCT** and **JARL_FIELD** to define structs with reflection metadata:
 ```cpp
-#include "jarl_struct.hpp"
+#include "jarl/struct.hpp"
 #include <iostream>
 
 JARL_STRUCT(Person, 
@@ -52,8 +51,8 @@ std::string name
 int age
 ```
 
-## JSON Serialization Example
-You can easily serialize a JARL_STRUCT struct to JSON using fold expressions:
+## 🔥 JSON Serialization Example
+You can easily serialize a **JARL_STRUCT** struct to JSON using fold expressions:
 ```cpp
 #include <iostream>
 #include <string>
@@ -182,5 +181,8 @@ Output:
     "a": 42,
     "b": false
   }
+
+## 📜 License
+MIT License © 2025 Mikhail Shevtsov
 }
 ```
