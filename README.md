@@ -180,8 +180,8 @@ Output:
     "a": 42,
     "b": false
   }
+}
+```
 
 ## 📜 License
 MIT License © 2025 Mikhail Shevtsov
-}
-```
