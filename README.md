@@ -10,7 +10,7 @@
 ## ⚙️ Installation
 Simply include the header in your project:
 ```cpp
-#include "jarl/struct.hpp"
+#include "jarl.hpp"
 ```
 No build steps or additional dependencies are required.
 
@@ -33,9 +33,9 @@ int main() {
     std::cout << jarl::get<1>(p) << "\n"; // prints 30
 
     // Access metadata
-    constexpr auto size = jarl::struct_size<Person>();
-    constexpr auto names = jarl::struct_field_names<Person>();
-    constexpr auto types = jarl::struct_field_type_names<Person>();
+    constexpr auto size = jarl::meta<Person>::size();
+    constexpr auto names = jarl::meta<Person>::field_names();
+    constexpr auto types = jarl::meta<Person>::field_type_names();
 
     for (std::size_t i = 0; i < size; ++i) {
         std::cout << types[i] << " " << names[i] << "\n";
@@ -59,7 +59,8 @@ You can easily serialize a **JARL_STRUCT** struct to JSON using fold expressions
 #include <concepts>
 #include <sstream>
 
-#include "jarl/struct.hpp"
+#define JARL_SHORTCUTS
+#include "jarl.hpp"
 
 template <typename T>
 concept String =
@@ -81,7 +82,7 @@ concept Array = requires(T a) {
 } && !String<T>;
 
 template <typename T>
-concept Object = jarl::structure<T>;
+concept Object = jarl::meta_struct<T>;
 
 template <typename T>
 concept Json = String<T> || Number<T> || Boolean<T> || Array<T> || Object<T>;
@@ -131,11 +132,11 @@ void build_json(const T& obj, std::ostringstream& oss, std::string& indent)
         {
             oss << indent << "\"" << jarl::field<T, Is>::name() << "\": ";
             build_json(jarl::get<Is>(obj), oss, indent);
-            if (Is < jarl::struct_size<T>() - 1)
+            if (Is < jarl::meta<T>::size() - 1)
                 oss << ",";
             oss << "\n";
         }(), ...);
-    }(std::make_index_sequence<jarl::struct_size<T>()>{});
+    }(std::make_index_sequence<jarl::meta<T>::size()>{});
 
     indent.erase(indent.size() - 2);
     oss << indent << "}";
@@ -153,15 +154,15 @@ std::string to_json(const T& obj)
     return oss.str();
 }
 
-JARL_STRUCT(Nested,
+JS(Nested, // JS stands for JARL_STRUCT
     JF(int, a, 42)
     JF(bool, b, false)
 );
 
-JARL_STRUCT(Test,
-    JF(std::string, str, "Vova")
+JS(Test,
+    JF(std::string, str, "Vova") // JF stands for JARL_FIELD
     JF(int, num, 100)
-    JF(JT(std::array<int, 3>), arr, {1, 2, 3})
+    JF(JT(std::array<int, 3>), arr, {1, 2, 3}) // JT stands for JARL_TYPE
     JF(Nested, obj)
 );
 
