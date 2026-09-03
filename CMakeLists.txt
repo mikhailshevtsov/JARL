@@ -1,9 +1,5 @@
-cmake_minimum_required(VERSION 3.28)
-project(jarl LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.10)
+project(jarl)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-add_library(jarl INTERFACE jarl.hpp)
+add_library(jarl INTERFACE)
 target_include_directories(jarl INTERFACE ./)

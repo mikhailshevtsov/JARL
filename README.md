@@ -3,7 +3,7 @@
 
 ## ✨ Features
 - **Header-only** - no dependencies beyond the standard library.
-- **Compile-time reflection** - retrieve field names, types, and member pointers at compile time.
+- **Compile-time reflection** - retrieve field names, types and member pointers at compile time.
 - **Structured access** - access struct fields by index or iterate over field metadata.
 - **Simple syntax** - define structs and fields with convenient macros.
 
@@ -17,7 +17,7 @@ No build steps or additional dependencies are required.
 ## ✅ Usage
 Use **JARL_STRUCT** and **JARL_FIELD** to define structs with reflection metadata:
 ```cpp
-#include "jarl/struct.hpp"
+#include "jarl.hpp"
 #include <iostream>
 
 JARL_STRUCT(Person, 
@@ -37,9 +37,8 @@ int main() {
     constexpr auto names = jarl::meta<Person>::field_names();
     constexpr auto types = jarl::meta<Person>::field_type_names();
 
-    for (std::size_t i = 0; i < size; ++i) {
+    for (std::size_t i = 0; i < size; ++i)
         std::cout << types[i] << " " << names[i] << "\n";
-    }
 }
 ```
 Output:
@@ -59,7 +58,6 @@ You can easily serialize a **JARL_STRUCT** struct to JSON using fold expressions
 #include <concepts>
 #include <sstream>
 
-#define JARL_SHORTCUTS
 #include "jarl.hpp"
 
 template <typename T>
@@ -154,16 +152,18 @@ std::string to_json(const T& obj)
     return oss.str();
 }
 
-JS(Nested, // JS stands for JARL_STRUCT
-    JF(int, a, 42)
-    JF(bool, b, false)
+JARL_STRUCT(
+    Nested,
+    JARL_FIELD(int, a, 42)
+    JARL_FIELD(bool, b, false)
 );
 
-JS(Test,
-    JF(std::string, str, "Vova") // JF stands for JARL_FIELD
-    JF(int, num, 100)
-    JF(JT(std::array<int, 3>), arr, {1, 2, 3}) // JT stands for JARL_TYPE
-    JF(Nested, obj)
+JARL_STRUCT(
+    Test,
+    JARL_FIELD(std::string, str, "Vova")
+    JARL_FIELD(int, num, 100)
+    JARL_FIELD(JARL_MACRO(std::array<int, 3>), arr, {1, 2, 3})
+    JARL_FIELD(Nested, obj)
 );
 
 int main()
@@ -185,4 +185,4 @@ Output:
 ```
 
 ## 📜 License
-MIT License © 2025 Mikhail Shevtsov
+No License
