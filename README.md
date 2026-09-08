@@ -50,7 +50,6 @@ int age
 ```
 
 ## 🔥 JSON Serialization Example
-You can easily serialize a **JARL_STRUCT** struct to JSON using fold expressions:
 ```cpp
 #include <iostream>
 #include <string>
@@ -124,17 +123,14 @@ void build_json(const T& obj, std::ostringstream& oss, std::string& indent)
     oss << "{\n";
     indent += "  ";
 
-    [&]<std::size_t... Is>(std::index_sequence<Is...>)
+    jarl::for_each_field<T>([&](auto field)
     {
-        ([&]()
-        {
-            oss << indent << "\"" << jarl::field<T, Is>::name() << "\": ";
-            build_json(jarl::get<Is>(obj), oss, indent);
-            if (Is < jarl::meta<T>::size() - 1)
-                oss << ",";
-            oss << "\n";
-        }(), ...);
-    }(std::make_index_sequence<jarl::meta<T>::size()>{});
+        oss << indent << "\"" << field.name() << "\": ";
+        build_json(jarl::get(obj, field), oss, indent);
+        if (field.index() < jarl::meta<T>::size() - 1)
+            oss << ",";
+        oss << "\n";
+    });
 
     indent.erase(indent.size() - 2);
     oss << indent << "}";
@@ -154,16 +150,16 @@ std::string to_json(const T& obj)
 
 JARL_STRUCT(
     Nested,
-    JARL_FIELD(int, a, 42)
-    JARL_FIELD(bool, b, false)
+    JARL_FIELD(a, int, 42)
+    JARL_FIELD(b, bool, false)
 );
 
 JARL_STRUCT(
     Test,
-    JARL_FIELD(std::string, str, "Vova")
-    JARL_FIELD(int, num, 100)
-    JARL_FIELD(JARL_MACRO(std::array<int, 3>), arr, {1, 2, 3})
-    JARL_FIELD(Nested, obj)
+    JARL_FIELD(str, std::string, "Vova")
+    JARL_FIELD(num, int, 100)
+    JARL_FIELD(arr, JARL_MACRO(std::array<int, 3>), {1, 2, 3})
+    JARL_FIELD(obj, Nested)
 );
 
 int main()
@@ -182,6 +178,112 @@ Output:
     "b": false
   }
 }
+```
+
+## 🔥 Streaming Object Example
+```cpp
+#include <iostream>
+#include <string>
+#include <sstream>
+
+#include "jarl.hpp"
+
+template <jarl::meta_struct T>
+std::ostream& operator<<(std::ostream& out, const T& object)
+{
+    jarl::for_each_field<T>([&](auto field)
+    {
+        out << field.name() << "=" << jarl::get(object, field) << (field.index() + 1 < jarl::size(object) ? "\n" : "");
+    });
+    return out;
+}
+
+template <jarl::meta_struct T>
+std::istream& operator>>(std::istream& in, T& object)
+{
+    std::string line;
+    while (std::getline(in, line) && !line.empty())
+    {
+        auto pos = line.find('=');
+        if (pos != std::string::npos)
+        {
+            std::string name = line.substr(0, pos);
+            std::string value = line.substr(pos + 1);
+            if (name.empty() || value.empty())
+                continue;
+            jarl::visit([&](auto& field_value)
+            {
+                std::istringstream iss(value);
+                iss >> field_value;
+            }, object, name);
+        }
+    }
+    return in;
+}
+
+JARL_STRUCT(
+    Person,
+    JARL_FIELD(name, std::string)
+    JARL_FIELD(age, int)
+);
+
+int main()
+{
+    std::string input = "name=John Doe\nage=30\n";
+    std::istringstream iss(input);
+    Person person;
+    iss >> person;
+    std::cout << person << "\n";
+}
+```
+Output:
+```bash
+name=John
+age=30
+```
+
+## 🔥 Copying Subset of Properties Example
+```cpp
+JARL_STRUCT(
+    Small,
+    JARL_FIELD(name, std::string)
+    JARL_FIELD(age, int)
+    JARL_FIELD(email, std::string)
+);
+
+JARL_STRUCT(
+    Large,
+    JARL_FIELD(email, std::string)
+    JARL_FIELD(address, std::string)
+    JARL_FIELD(name, std::string)
+    JARL_FIELD(phone, std::string)
+    JARL_FIELD(age, int)
+);
+
+int main()
+{
+    Large large;
+    large.address = "123 Main St";
+    large.name = "John Doe";
+    large.phone = "555-1234";
+    large.age = 30;
+    large.email = "john.doe@example.com";
+
+    Small small;
+
+    jarl::for_each_field<Small>([&](auto field)
+    {
+        jarl::get(small, field) = jarl::get(large, field.static_name());
+    });
+
+    std::cout << small << "\n";
+}
+```
+Output:
+```bash
+name=John Doe
+age=30
+email=john.doe@example.com
 ```
 
 ## 📜 License

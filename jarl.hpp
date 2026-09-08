@@ -35,7 +35,7 @@ friend constexpr JARL_DECLARE_NEXT_INDEX(NAME)
 
 #define JARL_DEFINE_STRUCT(STRUCT_NAME, ...) \
 using this_type = STRUCT_NAME; \
-friend constexpr void is_meta_struct(jarl::tag<this_type>) noexcept {} \
+friend constexpr bool get_meta_struct(jarl::tag<this_type>) noexcept { return true; } \
 friend constexpr auto get_name(jarl::tag<this_type>) noexcept { return #STRUCT_NAME; } \
 friend constexpr JARL_STATIC_INDEX(0) \
 __VA_OPT__(__VA_ARGS__) \
@@ -57,8 +57,17 @@ struct static_string
 template <typename>
 struct tag {};
 
+template <typename T, typename = void>
+struct is_meta_struct : std::false_type {};
+
 template <typename T>
-concept meta_struct = requires{ is_meta_struct(tag<std::remove_cvref_t<T>>{}); };
+struct is_meta_struct<T, std::void_t<decltype(get_meta_struct(tag<std::remove_cvref_t<T>>{}))>> : std::true_type {};
+
+template <typename T>
+constexpr bool is_meta_struct_v = is_meta_struct<T>::value;
+
+template <typename T>
+concept meta_struct = is_meta_struct_v<std::remove_cvref_t<T>>;
 
 namespace impl
 {
@@ -93,18 +102,18 @@ private:
 };
 
 template <typename T, typename>
-struct make_meta{};
+struct make_meta;
 
 template <typename T, std::size_t... Is>
 struct make_meta<T, std::index_sequence<Is...>> { using type = meta<T, Is...>; };
 
-template <typename T, std::size_t N>
-using make_meta_t = typename make_meta<T, decltype(std::make_index_sequence<N>{})>::type;
+template <typename T>
+using make_meta_t = typename make_meta<T, decltype(std::make_index_sequence<get_size(tag<T>{})>{})>::type;
 
 }
 
 template <meta_struct T>
-using meta = impl::make_meta_t<std::remove_cvref_t<T>, get_size(tag<std::remove_cvref_t<T>>{})>;
+using meta = impl::make_meta_t<std::remove_cvref_t<T>>;
 
 template <meta_struct T, std::size_t I>
 using field = impl::field<std::remove_cvref_t<T>, I>;
@@ -126,30 +135,30 @@ constexpr decltype(auto) get(T&& object, static_string<Cs...> s = {}) noexcept
 }
 
 template <meta_struct T, typename V>
-constexpr auto visit(V&& visitor, T&& object, std::size_t index)
+constexpr auto visit(V&& vis, T&& object, std::size_t index)
 {
     return [&]<std::size_t... Is>(std::index_sequence<Is...>)
     {
-        using R = std::common_type_t<decltype(std::forward<V>(visitor)(get<Is>(std::forward<T>(object))))...>;
+        using R = std::common_type_t<decltype(std::forward<V>(vis)(get<Is>(std::forward<T>(object))))...>;
         using Visitor = R(*)(V&&, T&&);
         static constexpr Visitor visitors[]
         {
-            [](V&& visitor, T&& object) -> R
+            [](V&& vis, T&& object) -> R
             {
-                return std::forward<V>(visitor)(get<Is>(std::forward<T>(object)));
+                return std::forward<V>(vis)(get<Is>(std::forward<T>(object)));
             }...
         };
-        return visitors[index](std::forward<V>(visitor), std::forward<T>(object));
+        return visitors[index](std::forward<V>(vis), std::forward<T>(object));
     }(std::make_index_sequence<meta<T>::size()>{});
 }
 
 template <meta_struct T, typename V>
-constexpr auto visit(V&& visitor, T&& object, std::string_view name)
+constexpr auto visit(V&& vis, T&& object, std::string_view name)
 {
     const auto& field_names = meta<T>::field_names();
     for (std::size_t index = 0; index < std::size(field_names); ++index)
         if (field_names[index] == name)
-            return visit(std::forward<V>(visitor), std::forward<T>(object), index);
+            return visit(std::forward<V>(vis), std::forward<T>(object), index);
 }
 
 struct void_t {};
@@ -158,54 +167,57 @@ namespace impl
 {
 
 template <std::size_t I, meta_struct T, typename V>
-constexpr auto for_each_helper(V&& visitor, T&& object)
+constexpr auto for_each_helper(V&& vis, T&& object)
 {
-    if constexpr (std::is_void_v<decltype(std::forward<V>(visitor)(get<I>(std::forward<T>(object))))>)
-    { 
-        std::forward<V>(visitor)(get<I>(std::forward<T>(object)));
-        return void_t{};
-    }
-    else
-        return std::forward<V>(visitor)(get<I>(std::forward<T>(object)));
+    // if constexpr (std::is_void_v<decltype(std::forward<V>(vis)(get<I>(std::forward<T>(object))))>)
+    // { 
+    //     std::forward<V>(vis)(get<I>(std::forward<T>(object)));
+    //     return void_t{};
+    // }
+    // else
+        return std::forward<V>(vis)(get<I>(std::forward<T>(object)));
 }
 
 template <std::size_t I, meta_struct T, typename V>
-constexpr auto for_each_field_helper(V&& visitor, field<T, I> field_)
+constexpr auto for_each_field_helper(V&& vis, field<T, I> field_)
 {
-    if constexpr (std::is_void_v<decltype(std::forward<V>(visitor)(field_))>)
-    { 
-        std::forward<V>(visitor)(field_);
-        return void_t{};
-    }
-    else
-        return std::forward<V>(visitor)(field_);
+    // if constexpr (std::is_void_v<decltype(std::forward<V>(vis)(field_))>)
+    // { 
+    //     std::forward<V>(vis)(field_);
+    //     return void_t{};
+    // }
+    // else
+        return std::forward<V>(vis)(field_);
 }
 
 }
 
 template <meta_struct T, typename V, std::size_t... Is>
-constexpr auto for_each(V&& visitor, T&& object, std::index_sequence<Is...>)
+constexpr auto for_each(V&& vis, T&& object, std::index_sequence<Is...>)
 {
-    return std::make_tuple(impl::for_each_helper<Is>(std::forward<V>(visitor), std::forward<T>(object))...);
+    return (impl::for_each_helper<Is>(std::forward<V>(vis), std::forward<T>(object)), ...);
 }
 
 template <meta_struct T, typename V>
-constexpr auto for_each(V&& visitor, T&& object)
+constexpr auto for_each(V&& vis, T&& object)
 {
-    return for_each(std::forward<V>(visitor), std::forward<T>(object), std::make_index_sequence<meta<T>::size()>{});
+    return for_each(std::forward<V>(vis), std::forward<T>(object), std::make_index_sequence<meta<T>::size()>{});
 }
 
 template <meta_struct T, typename V, std::size_t... Is>
-constexpr auto for_each_field(V&& visitor, std::index_sequence<Is...>)
+constexpr auto for_each_field(V&& vis, std::index_sequence<Is...>)
 {
-    return std::make_tuple(impl::for_each_field_helper<Is, T>(std::forward<V>(visitor), field<T, Is>{})...);
+    return (impl::for_each_field_helper<Is, T>(std::forward<V>(vis), field<T, Is>{}), ...);
 }
 
 template <meta_struct T, typename V>
-constexpr auto for_each_field(V&& visitor)
+constexpr auto for_each_field(V&& vis)
 {
-    return for_each_field<T>(std::forward<V>(visitor), std::make_index_sequence<meta<T>::size()>{});
+    return for_each_field<T>(std::forward<V>(vis), std::make_index_sequence<meta<T>::size()>{});
 }
+
+template <meta_struct T>
+constexpr std::size_t size(const T&) noexcept { return meta<T>::size(); }
 
 }
 
